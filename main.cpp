@@ -3,6 +3,15 @@
 
 int main(void)
 {
+    int i;
+    int controller_count = 0;
+    int controller_index = 0;
+    char guid[64];
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_ERROR, SDL_LOG_PRIORITY_VERBOSE);
+        SDL_LogSetPriority(SDL_LOG_CATEGORY_INPUT, SDL_LOG_PRIORITY_VERBOSE);
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_SYSTEM, SDL_LOG_PRIORITY_VERBOSE);
+
+
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER) < 0)
     {
         printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
@@ -22,17 +31,17 @@ int main(void)
         return -1;
     }
 
-    SDL_SetHint(SDL_HINT_JOYSTICK_MFI, "0");
-    SDL_SetHint(SDL_HINT_JOYSTICK_IOKIT, "0");
-    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI, "0");
-    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_XBOX, "0");
-    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_XBOX_360, "0");
-	SDL_SetHint(SDL_HINT_JOYSTICK_RAWINPUT, "0");
-	SDL_SetHint(SDL_HINT_JOYSTICK_RAWINPUT_CORRELATE_XINPUT, "0");
+    // SDL_SetHint(SDL_HINT_JOYSTICK_MFI, "0");
+    // SDL_SetHint(SDL_HINT_JOYSTICK_IOKIT, "0");
+    // SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI, "0");
+    // SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_XBOX, "0");
+    // SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_XBOX_360, "0");
+	// SDL_SetHint(SDL_HINT_JOYSTICK_RAWINPUT, "0");
+	// SDL_SetHint(SDL_HINT_JOYSTICK_RAWINPUT_CORRELATE_XINPUT, "0");
 
     printf("Waiting for controllers...\n");
 
-    SDL_GameControllerAddMappingsFromFile("gamecontrollerdb.txt");
+    // SDL_GameControllerAddMappingsFromFile("gamecontrollerdb.txt");
 
     SDL_Event e;
     int running = 1;
@@ -48,7 +57,66 @@ int main(void)
 
         int numJoysticks = SDL_NumJoysticks();
         printf("Connected controllers: %d\n", numJoysticks);
+            /* Print information about the controller */
+    for (i = 0; i < SDL_NumJoysticks(); ++i) {
+        const char *name;
+        const char *path;
+        const char *description;
 
+        SDL_JoystickGetGUIDString(SDL_JoystickGetDeviceGUID(i),
+                                  guid, sizeof(guid));
+
+        if (SDL_IsGameController(i)) {
+            controller_count++;
+            name = SDL_GameControllerNameForIndex(i);
+            path = SDL_GameControllerPathForIndex(i);
+            switch (SDL_GameControllerTypeForIndex(i)) {
+            case SDL_CONTROLLER_TYPE_AMAZON_LUNA:
+                description = "Amazon Luna Controller";
+                break;
+            case SDL_CONTROLLER_TYPE_GOOGLE_STADIA:
+                description = "Google Stadia Controller";
+                break;
+            case SDL_CONTROLLER_TYPE_NINTENDO_SWITCH_JOYCON_LEFT:
+            case SDL_CONTROLLER_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT:
+            case SDL_CONTROLLER_TYPE_NINTENDO_SWITCH_JOYCON_PAIR:
+                description = "Nintendo Switch Joy-Con";
+                break;
+            case SDL_CONTROLLER_TYPE_NINTENDO_SWITCH_PRO:
+                description = "Nintendo Switch Pro Controller";
+                break;
+            case SDL_CONTROLLER_TYPE_PS3:
+                description = "PS3 Controller";
+                break;
+            case SDL_CONTROLLER_TYPE_PS4:
+                description = "PS4 Controller";
+                break;
+            case SDL_CONTROLLER_TYPE_PS5:
+                description = "PS5 Controller";
+                break;
+            case SDL_CONTROLLER_TYPE_XBOX360:
+                description = "XBox 360 Controller";
+                break;
+            case SDL_CONTROLLER_TYPE_XBOXONE:
+                description = "XBox One Controller";
+                break;
+            case SDL_CONTROLLER_TYPE_VIRTUAL:
+                description = "Virtual Game Controller";
+                break;
+            default:
+                description = "Game Controller";
+                break;
+            }
+        } else {
+            name = SDL_JoystickNameForIndex(i);
+            path = SDL_JoystickPathForIndex(i);
+            description = "Joystick";
+        }
+        SDL_Log("%s %d: %s%s%s (guid %s, VID 0x%.4x, PID 0x%.4x, player index = %d)\n",
+                description, i, name ? name : "Unknown", path ? ", " : "", path ? path : "", guid,
+                SDL_JoystickGetDeviceVendor(i), SDL_JoystickGetDeviceProduct(i), SDL_JoystickGetDevicePlayerIndex(i));
+    }
+    SDL_Log("There are %d game controller(s) attached (%d joystick(s))\n", controller_count, SDL_NumJoysticks());
         for (int i = 0; i < numJoysticks; i++)
         {
             SDL_GameController* gGameController = SDL_GameControllerOpen(i);
