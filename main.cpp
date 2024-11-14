@@ -117,8 +117,9 @@ int main(void)
                 SDL_JoystickGetDeviceVendor(i), SDL_JoystickGetDeviceProduct(i), SDL_JoystickGetDevicePlayerIndex(i));
     }
     SDL_Log("There are %d game controller(s) attached (%d joystick(s))\n", controller_count, SDL_NumJoysticks());
-        for (int i = 0; i < numJoysticks; i++)
-        {
+        // for (int i = 0; i < numJoysticks; i++)
+        // {
+        i =    1;
             SDL_GameController* gGameController = SDL_GameControllerOpen(i);
             if (gGameController != NULL)
             {
@@ -165,7 +166,7 @@ int main(void)
             {
                 printf("No controller connected: %s\n", SDL_GetError());
             }
-        }
+        // }
 
         SDL_Delay(2000);
     }
