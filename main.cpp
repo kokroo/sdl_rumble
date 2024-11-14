@@ -3,14 +3,12 @@
 
 int main(void)
 {
-    // Initialize SDL with video and joystick
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER) < 0)
     {
         printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
         return -1;
     }
 
-    // Create an SDL window (required for macOS gamepad detection)
     SDL_Window* window = SDL_CreateWindow("SDL Gamepad Test",
                                           SDL_WINDOWPOS_UNDEFINED,
                                           SDL_WINDOWPOS_UNDEFINED,
@@ -24,20 +22,22 @@ int main(void)
         return -1;
     }
 
-    SDL_SetHint(SDL_HINT_JOYSTICK_MFI, "1");
-    SDL_SetHint(SDL_HINT_JOYSTICK_IOKIT, "1");
+    SDL_SetHint(SDL_HINT_JOYSTICK_MFI, "0");
+    SDL_SetHint(SDL_HINT_JOYSTICK_IOKIT, "0");
+    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI, "0");
+    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_XBOX, "0");
+    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_XBOX_360, "0");
+	SDL_SetHint(SDL_HINT_JOYSTICK_RAWINPUT, "0");
+	SDL_SetHint(SDL_HINT_JOYSTICK_RAWINPUT_CORRELATE_XINPUT, "0");
 
     printf("Waiting for controllers...\n");
 
-    // Load custom controller mappings (if any)
     SDL_GameControllerAddMappingsFromFile("gamecontrollerdb.txt");
 
-    // Event loop
     SDL_Event e;
     int running = 1;
     while (running)
     {
-        // Process events
         while (SDL_PollEvent(&e) != 0)
         {
             if (e.type == SDL_QUIT)
@@ -46,7 +46,6 @@ int main(void)
             }
         }
 
-        // Check for connected controllers
         int numJoysticks = SDL_NumJoysticks();
         printf("Connected controllers: %d\n", numJoysticks);
 
@@ -56,14 +55,36 @@ int main(void)
             if (gGameController != NULL)
             {
                 printf("Controller %i: %s, address: %p\n", i, SDL_GameControllerName(gGameController), (void*)gGameController);
-
-                // Check for rumble capability and initiate rumble
+            // Get the joystick associated with this game controller
+            SDL_Joystick* joystick = SDL_GameControllerGetJoystick(gGameController);
+            
+            // Get the GUID for the joystick
+            SDL_JoystickGUID guid = SDL_JoystickGetGUID(joystick);
+            char guidString[33]; // GUID is 16 bytes, so string representation will be 32 characters + null terminator
+            SDL_JoystickGetGUIDString(guid, guidString, sizeof(guidString));
+            
+            printf("Controller %d: %s\n", i, SDL_GameControllerName(gGameController));
+            printf("Joystick GUID: %s\n", guidString); // Print the GUID in string format
                 if (SDL_GameControllerHasRumble(gGameController))
                 {
                     SDL_GameControllerRumble(gGameController, 0xFFFF * 3 / 4, 0xFFFF * 3 / 4, 500);
-                    SDL_Delay(500); // Optional delay to show rumble effect
+                    SDL_Delay(500);
                     SDL_GameControllerRumble(gGameController, 0, 0, 0);
-                    printf("Rumble on controller %d\n\n", i);
+                    printf("Rumble on controller %d\n", i);
+
+                    // Print the joystick mode hints after each rumble
+                    const char* mfiHint = SDL_GetHint(SDL_HINT_JOYSTICK_MFI);
+                    const char* iokitHint = SDL_GetHint(SDL_HINT_JOYSTICK_IOKIT);
+                    const char* hidHint = SDL_GetHint(SDL_HINT_JOYSTICK_HIDAPI);
+					const char* xboxhidHint = SDL_GetHint(SDL_HINT_JOYSTICK_HIDAPI_XBOX);
+					const char* xbox360hidHint = SDL_GetHint(SDL_HINT_JOYSTICK_HIDAPI_XBOX_360);
+
+                    printf("SDL Joystick Modes:\n");
+                    printf("MFI: %s\n", mfiHint ? mfiHint : "Not Set");
+                    printf("IOKIT: %s\n", iokitHint ? iokitHint : "Not Set");
+                    printf("HIDAPI: %s\n\n", hidHint ? hidHint : "Not Set");
+					printf("XBOXHIDAPI: %s\n\n", xboxhidHint ? xboxhidHint : "Not Set");
+					printf("XBOX360HIDAPI: %s\n\n", xbox360hidHint ? xbox360hidHint : "Not Set");
                 }
                 else
                 {
@@ -78,12 +99,11 @@ int main(void)
             }
         }
 
-        SDL_Delay(1000); // Delay for periodic checking
+        SDL_Delay(2000);
     }
 
     printf("Exiting program...\n");
 
-    // Clean up and quit
     SDL_DestroyWindow(window);
     SDL_Quit();
 
